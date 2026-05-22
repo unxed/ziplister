@@ -1,6 +1,6 @@
 # ziplister
 
-`ziplister` is a simple demo command-line utility that lists the contents of a ZIP archive, leveraging the `zipcharset` micro-library to resolve legacy character encodings.
+`ziplister` is a simple demo command-line utility that lists the contents of a ZIP archive, leveraging the [zipcharset](https://github.com/unxed/zipcharset) micro-library to resolve legacy character encodings.
 
 ## Requirements
 
