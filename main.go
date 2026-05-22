@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 
@@ -14,32 +15,39 @@ func main() {
 		log.Fatalf("Usage: %s <archive.zip>", os.Args[0])
 	}
 
-	filePath := os.Args[1]
+	if err := listArchive(os.Args[1], os.Stdout); err != nil {
+		log.Fatalf("Error: %v", err)
+	}
+}
+
+// listArchive parses the ZIP archive, decodes legacy names, and writes output to the provided writer.
+func listArchive(filePath string, out io.Writer) error {
 	f, err := os.Open(filePath)
 	if err != nil {
-		log.Fatalf("failed to open archive: %v", err)
+		return fmt.Errorf("failed to open archive: %w", err)
 	}
 	defer f.Close()
 
 	stat, err := f.Stat()
 	if err != nil {
-		log.Fatalf("failed to stat file: %v", err)
+		return fmt.Errorf("failed to stat file: %w", err)
 	}
 
-	// Create zip.ReaderOptions and inject our micro-library decoder
+	// Inject the custom NameDecoder callback
 	opts := zip.ReaderOptions{
 		NameDecoder: zipcharset.NewNameDecoder(),
 	}
 
 	zr, err := zip.NewReaderWithOptions(f, stat.Size(), opts)
 	if err != nil {
-		log.Fatalf("failed to read zip archive: %v", err)
+		return fmt.Errorf("failed to read zip archive: %w", err)
 	}
 
-	fmt.Printf("Listing files in %s:\n", filePath)
-	fmt.Println("----------------------------------------")
+	fmt.Fprintf(out, "Listing files in %s:\n", filePath)
+	fmt.Fprintln(out, "----------------------------------------")
 	for _, file := range zr.File {
-		fmt.Printf("- %s (Size: %d bytes)\n", file.Name, file.UncompressedSize64)
+		fmt.Fprintf(out, "- %s (Size: %d bytes)\n", file.Name, file.UncompressedSize64)
 	}
-	fmt.Println("----------------------------------------")
+	fmt.Fprintln(out, "----------------------------------------")
+	return nil
 }
